@@ -33,4 +33,5 @@ require_once __DIR__ . '/vendor/autoload.php';
 add_action('plugins_loaded', function () {
   new \AI\Pedidos\PostTypes\Pedidos();
   new \AI\Pedidos\Metaboxes\PedidosMetabox();
+  new \AI\Pedidos\REST\PedidosREST();
 });
