@@ -7,10 +7,13 @@ defined('ABSPATH') || exit;
 class Pedidos
 {
   private $text_domain;
+  private $post_type;
+
 
   public function __construct()
   {
     $this->text_domain = AI_PEDIDOS_TEXT_DOMAIN;
+    $this->post_type   = AI_PEDIDOS_CPT;
 
     add_action('init', [$this, 'register_post_type']);
   }
@@ -46,6 +49,6 @@ class Pedidos
       'rest_controller_class' => 'WP_REST_Posts_Controller',
     ];
 
-    register_post_type('ai_pedido', $args);
+    register_post_type($this->post_type, $args);
   }
 }
