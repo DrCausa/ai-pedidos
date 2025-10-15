@@ -178,9 +178,9 @@ class PedidosMetabox
 
   public function apply_status_filter($query)
   {
-    global $current_page;
+    global $pagenow;
 
-    if (!is_admin() || $current_page !== 'edit.php') return;
+    if (!is_admin() || $pagenow !== 'edit.php') return;
     if ($query->get('post_type') !== $this->post_type) return;
 
     if (!empty($_GET['ai_status_filter'])) {
