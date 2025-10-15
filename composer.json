@@ -1,0 +1,11 @@
+{
+  "name": "drcausa/ai-pedido",
+  "description": "Registra un CPT para 'Pedidos de Impresión' con metaboxes y soporte para API REST.",
+  "type": "wordpress-plugin",
+  "autoload": {
+    "psr-4": {
+      "AI\\Pedidos\\": "includes/"
+    }
+  },
+  "require": {}
+}
