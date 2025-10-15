@@ -18,6 +18,12 @@ class PedidosMetabox
 
     add_action('add_meta_boxes', [$this, 'add_metabox']);
     add_action('save_post_' . $this->post_type, [$this, 'save_metabox']);
+
+    add_filter('manage_' . $this->post_type . '_posts_columns', [$this, 'add_custom_columns']);
+    add_action('manage_' . $this->post_type . '_posts_custom_column', [$this, 'render_custom_columns'], 10, 2);
+
+    add_action('restrict_manage_posts', [$this, 'add_status_filter']);
+    add_filter('pre_get_posts', [$this, 'apply_status_filter']);
   }
 
   public function add_metabox()
@@ -47,37 +53,37 @@ class PedidosMetabox
     $finish   = get_post_meta($post->ID, $finish_id,   true);
     $quantity = get_post_meta($post->ID, $quantity_id, true);
     $status   = get_post_meta($post->ID, $status_id,   true);
-?>
-    <p>
-      <label for="<?= $size_id ?>"><?php _e("Tamaño", $this->text_domain) ?></label>
-      <input type="text" name="<?= $size_id ?>" value="<?php esc_attr($size) ?>" class="widefat">
-    </p>
 
-    <p>
-      <label for="<?= $paper_id ?>"><?php _e("Papel", $this->text_domain) ?></label>
-      <input type="text" name="<?= $paper_id ?>" value="<?php esc_attr($paper) ?>" class="widefat">
-    </p>
+    echo '
+      <p>
+        <label for="' . esc_attr($size_id) . '">' . __("Tamaño", $this->text_domain) . '</label>
+        <input type="text" name="' . esc_attr($size_id) . '" value="' . esc_attr($size) . '" class="widefat">
+      </p>
 
-    <p>
-      <label for="<?= $finish_id ?>"><?php _e("Acabado", $this->text_domain) ?></label>
-      <input type="text" name="<?= $finish_id ?>" value="<?php esc_attr($finish) ?>" class="widefat">
-    </p>
+      <p>
+        <label for="' . esc_attr($paper_id) . '">' . __("Papel", $this->text_domain) . '</label>
+        <input type="text" name="' . esc_attr($paper_id) . '" value="' . esc_attr($paper) . '" class="widefat">
+      </p>
 
-    <p>
-      <label for="<?= $quantity_id ?>"><?php _e("Cantidad", $this->text_domain) ?></label>
-      <input type="text" name="<?= $quantity_id ?>" value="<?php esc_attr($quantity) ?>" class="widefat">
-    </p>
+      <p>
+        <label for="' . esc_attr($finish_id) . '">' . __("Acabado", $this->text_domain) . '</label>
+        <input type="text" name="' . esc_attr($finish_id) . '" value="' . esc_attr($finish) . '" class="widefat">
+      </p>
 
-    <p>
-      <label for="<?= $status_id ?>"><?php _e("Estado", $this->text_domain) ?></label>
-      <select name="<?= $status_id ?>" class="widefat">
-        <option value="pending" <?php selected($status, 'pending') ?>><?php _e('Pendiente', $this->text_domain) ?></option>
-        <option value="in-progress" <?php selected($status, 'in-progress') ?>><?php _e('En proceso', $this->text_domain) ?></option>
-        <option value="ready" <?php selected($status, 'ready') ?>><?php _e('Listo', $this->text_domain) ?></option>
-      </select>
-    </p>
+      <p>
+        <label for="' . esc_attr($quantity_id) . '">' . __("Cantidad", $this->text_domain) . '</label>
+        <input type="text" name="' . esc_attr($quantity_id) . '" value="' . esc_attr($quantity) . '" class="widefat">
+      </p>
 
-<?php
+      <p>
+        <label for="' . esc_attr($status_id) . '">' . __("Estado", $this->text_domain) . '</label>
+        <select name="' . esc_attr($status_id) . '" class="widefat">
+          <option value="pending" ' . selected($status, 'pending', false) . '>' . __('Pendiente', $this->text_domain) . '</option>
+          <option value="in-progress" ' . selected($status, 'in-progress', false) . '>' . __('En proceso', $this->text_domain) . '</option>
+          <option value="ready" ' . selected($status, 'ready', false) . '>' . __('Listo', $this->text_domain) . '</option>
+        </select>
+      </p>
+    ';
   }
 
   public function save_metabox($post_id)
@@ -122,6 +128,68 @@ class PedidosMetabox
       if (in_array($status, $valid_statuses, true)) {
         update_post_meta($post_id, $status_id, $status);
       }
+    }
+  }
+
+  public function add_custom_columns($columns)
+  {
+    $columns['ai_status'] = __('Estado', $this->text_domain);
+    $columns['ai_size']   = __('Tamaño', $this->text_domain);
+    return $columns;
+  }
+
+  public function render_custom_columns($column, $post_id)
+  {
+    $status_id   = $this->meta_prefix . 'status';
+    $size_id     = $this->meta_prefix . 'size';
+
+    switch ($column) {
+      case 'ai_status':
+        $status = get_post_meta($post_id, $status_id, true);
+        $labels = [
+          'pending'     => __('Pendiente',  $this->text_domain),
+          'in-progress' => __('En proceso', $this->text_domain),
+          'ready'       => __('Listo',      $this->text_domain),
+        ];
+        echo $labels[$status] ?? $status;
+        break;
+      case 'ai_size':
+        $size = get_post_meta($post_id, $size_id, true);
+        echo esc_html($size);
+        break;
+    }
+  }
+
+  public function add_status_filter($post_type)
+  {
+    if ($post_type !== $this->post_type) return;
+
+    $current_status = $_GET['ai_status_filter'] ?? '';
+
+    echo '
+      <select name="ai_status_filter">
+        <option value="">' . __('Todos los estados', $this->text_domain) . '</option>
+        <option value="pending" ' . selected($current_status, 'pending', false) . '>' . __('Pendiente', $this->text_domain) . '</option>
+        <option value="in-progress" ' . selected($current_status, 'in-progress', false) . '>' . __('En proceso', $this->text_domain) . '</option>
+        <option value="ready" ' . selected($current_status, 'ready', false) . '>' . __('Listo', $this->text_domain) . '</option>
+      </select>
+    ';
+  }
+
+  public function apply_status_filter($query)
+  {
+    global $current_page;
+
+    if (!is_admin() || $current_page !== 'edit.php') return;
+    if ($query->get('post_type') !== $this->post_type) return;
+
+    if (!empty($_GET['ai_status_filter'])) {
+      $query->set('meta_query', [
+        [
+          'key'   => $this->meta_prefix . 'status',
+          'value' => sanitize_key($_GET['ai_status_filter']),
+        ]
+      ]);
     }
   }
 }
