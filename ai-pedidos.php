@@ -24,6 +24,10 @@ if (! defined('AI_PEDIDOS_TEXT_DOMAIN')) {
   define('AI_PEDIDOS_TEXT_DOMAIN', 'ai-pedidos');
 }
 
+if (! defined('AI_PEDIDOS_CPT')) {
+  define('AI_PEDIDOS_CPT', 'ai_pedido');
+}
+
 require_once __DIR__ . '/vendor/autoload.php';
 
 add_action('plugins_loaded', function () {
